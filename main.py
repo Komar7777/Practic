@@ -745,3 +745,21 @@ def compare_models(models, X_test, y_test):
         logger.error(f"Ошибка сравнения моделей: {str(e)}")
         st.error(f"Ошибка сравнения моделей: {str(e)}")
         return None
+
+# --- Модуль предсказания ---
+def predict_with_model(model, input_data, scaler, le):
+    """
+    Делает предсказание с помощью модели.
+    """
+    try:
+        numeric_columns = ['Air temperature [K]', 'Process temperature [K]', 
+                          'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]']
+        numeric_columns = [col for col in numeric_columns if col in input_data.columns]
+        input_data[numeric_columns] = scaler.transform(input_data[numeric_columns])
+        
+        prediction = model.predict(input_data)
+        return prediction
+    except Exception as e:
+        logger.error(f"Ошибка предсказания: {str(e)}")
+        st.error(f"Ошибка предсказания: {str(e)}")
+        return None
