@@ -103,6 +103,7 @@ def load_dataset(local_path="POLOMKA.csv", url="https://raw.githubusercontent.co
         logger.error(f"Ошибка загрузки датасета: {str(e)}")
         st.error(f"Ошибка загрузки датасета: {str(e)}")
         return None
+
 # --- Модуль генерации синтетических данных ---
 def generate_synthetic_data(n_samples=1000, n_features=6, n_classes=2):
     """
