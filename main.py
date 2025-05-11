@@ -763,3 +763,48 @@ def predict_with_model(model, input_data, scaler, le):
         logger.error(f"Ошибка предсказания: {str(e)}")
         st.error(f"Ошибка предсказания: {str(e)}")
         return None
+
+# --- Модуль тестирования на подвыборках ---
+def test_on_subsamples(X, y, model, sample_sizes=[0.1, 0.3, 0.5, 0.7, 0.9]):
+    """
+    Тестирует модель на подвыборках разного размера.
+    """
+    try:
+        results = []
+        for size in sample_sizes:
+            X_sub, _, y_sub, _ = train_test_split(X, y, train_size=size, 
+                                                 random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(X_sub, y_sub, 
+                                                               test_size=0.2, 
+                                                               random_state=42)
+            model.fit(X_train, y_train)
+            metrics, _, _ = evaluate_model(model, X_test, y_test, 
+                                          f"Subsample {size}")
+            results.append({
+                'Sample Size': size,
+                'Accuracy': metrics['Accuracy'],
+                'Precision': metrics['Precision'],
+                'Recall': metrics['Recall'],
+                'F1': metrics['F1'],
+                'Log Loss': metrics['Log Loss'],
+                'ROC-AUC': metrics['ROC-AUC']
+            })
+        
+        results_df = pd.DataFrame(results)
+        plt.figure(figsize=(10, 6))
+        sns.lineplot(x='Sample Size', y='Accuracy', data=results_df, 
+                    marker='o', color='purple')
+        plt.title('Зависимость точности от размера выборки', fontsize=14)
+        plt.xlabel('Размер выборки', fontsize=12)
+        plt.ylabel('Точность', fontsize=12)
+        st.pyplot(plt)
+        
+        results_df.to_csv('subsample_results.csv', index=False)
+        with open('subsample_results.json', 'w') as f:
+            json.dump(results, f)
+        logger.info("Результаты тестирования на подвыборках сохранены")
+        return results_df
+    except Exception as e:
+        logger.error(f"Ошибка тестирования на подвыборках: {str(e)}")
+        st.error(f"Ошибка тестирования на подвыборках: {str(e)}")
+        return None
