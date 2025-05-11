@@ -666,3 +666,44 @@ def plot_shap_values(model, X, model_name):
     except Exception as e:
         logger.error(f"Ошибка построения SHAP значений: {str(e)}")
         st.error(f"Ошибка построения SHAP значений: {str(e)}")
+
+# --- Модуль анализа чувствительности гиперпараметров ---
+def hyperparameter_sensitivity(model_class, X_train, y_train, param_name, param_values):
+    """
+    Анализирует чувствительность модели к изменению гиперпараметра.
+    """
+    try:
+        results = []
+        for value in param_values:
+            params = {param_name: value, 'random_state': 42}
+            model = model_class(**params)
+            model.fit(X_train, y_train)
+            scores = cross_val_score(model, X_train, y_train, cv=5, 
+                                    scoring='accuracy', n_jobs=-1)
+            results.append({
+                'Parameter Value': value,
+                'Mean Accuracy': np.mean(scores),
+                'Std Accuracy': np.std(scores)
+            })
+        results_df = pd.DataFrame(results)
+        
+        plt.figure(figsize=(8, 5))
+        sns.lineplot(x='Parameter Value', y='Mean Accuracy', data=results_df, 
+                    marker='o', label='Средняя точность')
+        plt.fill_between(results_df['Parameter Value'], 
+                        results_df['Mean Accuracy'] - results_df['Std Accuracy'], 
+                        results_df['Mean Accuracy'] + results_df['Std Accuracy'], 
+                        alpha=0.2, label='Стд. отклонение')
+        plt.title(f'Чувствительность к {param_name}', fontsize=14)
+        plt.xlabel(param_name, fontsize=12)
+        plt.ylabel('Точность', fontsize=12)
+        plt.legend()
+        st.pyplot(plt)
+        
+        results_df.to_csv(f'hyperparam_{param_name}_sensitivity.csv', index=False)
+        logger.info(f"Анализ чувствительности для {param_name} завершен")
+        return results_df
+    except Exception as e:
+        logger.error(f"Ошибка анализа чувствительности: {str(e)}")
+        st.error(f"Ошибка анализа чувствительности: {str(e)}")
+        return None
