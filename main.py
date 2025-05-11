@@ -1069,3 +1069,72 @@ class TestPredictionSystem(unittest.TestCase):
         self.assertIsNotNone(latex_code)
         self.assertIsInstance(latex_code, str)
         self.assertTrue(r'\documentclass' in latex_code)
+
+# --- Основной модуль Streamlit ---
+def main():
+    """
+    Основная функция для запуска веб-приложения.
+    """
+    try:
+        st.set_page_config(page_title="Прогнозирование неисправностей", 
+                          layout="wide")
+        st.title("Прогнозирование неисправности компьютерных компонентов")
+        
+        # Диагностика окружения
+        st.sidebar.header("Диагностика")
+        if st.sidebar.button("Проверить окружение"):
+            st.write("Версия Python:", sys.version)
+            st.write("Путь к исполняемому файлу Python:", sys.executable)
+            st.write("Активировано виртуальное окружение:", 'venv' in sys.prefix)
+            try:
+                import streamlit
+                st.write("Версия Streamlit:", streamlit.__version__)
+            except ImportError:
+                st.error("Streamlit не установлен в текущем окружении")
+            st.write("Boruta установлен:", boruta_available)
+            st.write("SHAP установлен:", shap_available)
+        
+        # Запуск тестов
+        if st.sidebar.button("Запустить юнит-тесты"):
+            loader = unittest.TestLoader()
+            suite = loader.loadTestsFromTestCase(TestPredictionSystem)
+            runner = unittest.TextTestRunner(verbosity=2)
+            result = runner.run(suite)
+            st.write("Результаты тестов:", str(result))
+        
+        # Загрузка датасета
+        dataset_url = st.text_input("URL датасета", 
+                                   "https://raw.githubusercontent.com/[ваш_репозиторий]/main/POLOMKA.csv")
+        use_synthetic = st.checkbox("Использовать синтетические данные")
+        if use_synthetic:
+            n_samples = st.number_input("Количество синтетических записей", 
+                                       min_value=100, value=1000, step=100)
+            data = generate_synthetic_data(n_samples=n_samples)
+        else:
+            data = load_dataset(url=dataset_url)
+        if data is None:
+            st.error("Не удалось загрузить датасет. Проверьте URL или используйте синтетические данные.")
+            return
+        
+        # Предобработка данных
+        X, y, le, scaler = preprocess_data(data)
+        if X is None:
+            st.error("Ошибка предобработки данных. Проверьте формат датасета.")
+            return
+        
+        # Разделение данных
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, 
+                                                           random_state=42)
+        logger.info(f"Размер обучающей выборки: {X_train.shape}, тестовой: {X_test.shape}")
+        
+        # Панель управления
+        st.sidebar.header("Управление")
+        action = st.sidebar.selectbox("Выберите действие", 
+                                     ["Анализ данных", "Обучить модели", 
+                                      "Загрузить модели", "Сравнить модели", 
+                                      "Сделать предсказание", "Тестировать на подвыборках",
+                                      "Кросс-валидация", "SHAP анализ", 
+                                      "Стресс-тестирование", "Анализ гиперпараметров",
+                                      "Тестирование подмножеств признаков", 
+                                      "Подбор признаков Boruta", "Генерация PDF-отчета"])
+        
