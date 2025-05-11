@@ -1286,3 +1286,21 @@ def main():
                     if name in ['Random Forest', 'Gradient Boosting']:
                         plot_feature_importance(model, X, name)
         
+        # Сравнение моделей
+        elif action == "Сравнить модели":
+            st.subheader("Сравнение моделей")
+            
+            models = {
+                'Random Forest': load_model('model_rf.joblib'),
+                'Gradient Boosting': load_model('model_gb.joblib'),
+                'MLP': load_model('model_mlp.joblib'),
+                'SVM': load_model('model_svm.joblib'),
+                'KNN': load_model('model_knn.joblib'),
+                'Stacking': load_model('model_stacking.joblib')
+            }
+            
+            results_df = compare_models(models, X_test, y_test)
+            if results_df is not None:
+                st.write("Результаты сравнения:")
+                st.dataframe(results_df)
+        
