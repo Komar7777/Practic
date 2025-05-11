@@ -1437,4 +1437,30 @@ def main():
                 metrics = stress_test_model(model, n_samples=n_samples)
                 if metrics:
                     st.write("Результаты стресс-тестирования:", metrics)
-        
+                    
+        # Анализ гиперпараметров
+        elif action == "Анализ гиперпараметров":
+            st.subheader("Анализ чувствительности гиперпараметров")
+            
+            model_name = st.selectbox("Выберите модель", 
+                                     ["Random Forest", "Gradient Boosting", "MLP", 
+                                      "SVM", "KNN"])
+            if model_name == "Random Forest":
+                param_name = st.selectbox("Гиперпараметр", 
+                                         ["n_estimators", "max_depth"])
+                param_values = {
+                    'n_estimators': [50, 100, 200, 300, 500],
+                    'max_depth': [5, 10, 15, 20, None]
+                }[param_name]
+                model_class = RandomForestClassifier
+            elif model_name == "Gradient Boosting":
+                param_name = st.selectbox("Гиперпараметр", 
+                                         ["n_estimators", "learning_rate"])
+                param_values = {
+                    'n_estimators': [50, 100, 200, 300],
+                    'learning_rate': [0.01, 0.05, 0.1, 0.2]
+                }[param_name]
+                model_class = GradientBoostingClassifier
+            elif model_name == "MLP":
+                param_name = st.selectbox("Гиперпараметр", 
+                                         ["learning_rate_init", "max_iter"])
