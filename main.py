@@ -377,3 +377,35 @@ def train_mlp(X_train, y_train, tune_params=False):
         logger.error(f"Ошибка обучения MLP: {str(e)}")
         st.error(f"Ошибка обучения MLP: {str(e)}")
         return None
+
+def train_svm(X_train, y_train, tune_params=False):
+    """
+    Обучает модель SVM с опциональным подбором гиперпараметров.
+    """
+    try:
+        logger.info("Начало обучения SVM")
+        start_time = time.time()
+        
+        if tune_params:
+            param_grid = {
+                'C': [0.1, 1, 10, 100],
+                'kernel': ['rbf', 'linear', 'poly'],
+                'gamma': ['scale', 'auto', 0.1, 1],
+                'degree': [2, 3]
+            }
+            model = GridSearchCV(SVC(probability=True, random_state=42), 
+                                param_grid, cv=5, n_jobs=-1, verbose=1)
+        else:
+            model = SVC(C=1, kernel='rbf', gamma='scale', probability=True, 
+                       random_state=42)
+        
+        model.fit(X_train, y_train)
+        elapsed_time = time.time() - start_time
+        logger.info(f"Обучение SVM завершено за {elapsed_time:.2f} сек")
+        if tune_params:
+            logger.info(f"Лучшие параметры: {model.best_params_}")
+        return model
+    except Exception as e:
+        logger.error(f"Ошибка обучения SVM: {str(e)}")
+        st.error(f"Ошибка обучения SVM: {str(e)}")
+        return None
