@@ -1351,3 +1351,27 @@ def main():
                         st.write(f"Результат ({model_name}): {result}")
                         logger.info(f"Предсказание ({model_name}): {result}")
         
+        # Кросс-валидация
+        elif action == "Кросс-валидация":
+            st.subheader("Кросс-валидация моделей")
+            
+            model_name = st.selectbox("Выберите модель для кросс-валидации", 
+                                     ["Random Forest", "Gradient Boosting", "MLP", 
+                                      "SVM", "KNN", "Stacking"])
+            model_files = {
+                "Random Forest": 'model_rf.joblib',
+                "Gradient Boosting": 'model_gb.joblib',
+                "MLP": 'model_mlp.joblib',
+                "SVM": 'model_svm.joblib',
+                "KNN": 'model_knn.joblib',
+                "Stacking": 'model_stacking.joblib'
+            }
+            model = load_model(model_files[model_name])
+            
+            if model:
+                cv_folds = st.slider("Количество фолдов", min_value=3, 
+                                    max_value=10, value=5)
+                cv_results = perform_cross_validation(model, X, y, cv=cv_folds)
+                if cv_results:
+                    st.write("Результаты кросс-валидации:", cv_results)
+        
