@@ -1168,3 +1168,97 @@ def main():
                 feature1, feature2, feature3 = X.columns[:3]
                 plot_3d_scatter(X, y, feature1, feature2, feature3)
         
+        # Обучение моделей
+        elif action == "Обучить модели":
+            st.subheader("Обучение моделей")
+            tune_params = st.checkbox("Подбирать гиперпараметры (может занять время)")
+            
+            models = {
+                'Random Forest': None,
+                'Gradient Boosting': None,
+                'MLP': None,
+                'SVM': None,
+                'KNN': None,
+                'Stacking': None
+            }
+            
+            # Random Forest
+            st.write("Обучение Random Forest...")
+            models['Random Forest'] = train_random_forest(X_train, y_train, tune_params)
+            if models['Random Forest']:
+                save_model(models['Random Forest'], 'model_rf.joblib')
+                metrics, report, y_pred = evaluate_model(models['Random Forest'], 
+                                                        X_test, y_test, 'Random Forest')
+                st.write("Метрики Random Forest:", metrics)
+                st.write("Отчет по классификации:")
+                st.json(report)
+                plot_confusion_matrix(y_test, y_pred, 'Random Forest')
+                plot_roc_curve(models['Random Forest'], X_test, y_test, 'Random Forest')
+                plot_feature_importance(models['Random Forest'], X, 'Random Forest')
+            
+            # Gradient Boosting
+            st.write("Обучение Gradient Boosting...")
+            models['Gradient Boosting'] = train_gradient_boosting(X_train, y_train, tune_params)
+            if models['Gradient Boosting']:
+                save_model(models['Gradient Boosting'], 'model_gb.joblib')
+                metrics, report, y_pred = evaluate_model(models['Gradient Boosting'], 
+                                                        X_test, y_test, 'Gradient Boosting')
+                st.write("Метрики Gradient Boosting:", metrics)
+                st.write("Отчет по классификации:")
+                st.json(report)
+                plot_confusion_matrix(y_test, y_pred, 'Gradient Boosting')
+                plot_roc_curve(models['Gradient Boosting'], X_test, y_test, 'Gradient Boosting')
+                plot_feature_importance(models['Gradient Boosting'], X, 'Gradient Boosting')
+            
+            # MLP
+            st.write("Обучение MLP...")
+            models['MLP'] = train_mlp(X_train, y_train, tune_params)
+            if models['MLP']:
+                save_model(models['MLP'], 'model_mlp.joblib')
+                metrics, report, y_pred = evaluate_model(models['MLP'], 
+                                                        X_test, y_test, 'MLP')
+                st.write("Метрики MLP:", metrics)
+                st.write("Отчет по классификации:")
+                st.json(report)
+                plot_confusion_matrix(y_test, y_pred, 'MLP')
+                plot_roc_curve(models['MLP'], X_test, y_test, 'MLP')
+            
+            # SVM
+            st.write("Обучение SVM...")
+            models['SVM'] = train_svm(X_train, y_train, tune_params)
+            if models['SVM']:
+                save_model(models['SVM'], 'model_svm.joblib')
+                metrics, report, y_pred = evaluate_model(models['SVM'], 
+                                                        X_test, y_test, 'SVM')
+                st.write("Метрики SVM:", metrics)
+                st.write("Отчет по классификации:")
+                st.json(report)
+                plot_confusion_matrix(y_test, y_pred, 'SVM')
+                plot_roc_curve(models['SVM'], X_test, y_test, 'SVM')
+            
+            # KNN
+            st.write("Обучение KNN...")
+            models['KNN'] = train_knn(X_train, y_train, tune_params)
+            if models['KNN']:
+                save_model(models['KNN'], 'model_knn.joblib')
+                metrics, report, y_pred = evaluate_model(models['KNN'], 
+                                                        X_test, y_test, 'KNN')
+                st.write("Метрики KNN:", metrics)
+                st.write("Отчет по классификации:")
+                st.json(report)
+                plot_confusion_matrix(y_test, y_pred, 'KNN')
+                plot_roc_curve(models['KNN'], X_test, y_test, 'KNN')
+            
+            # Stacking
+            st.write("Обучение модели стэкинга...")
+            models['Stacking'] = train_stacking(X_train, y_train)
+            if models['Stacking']:
+                save_model(models['Stacking'], 'model_stacking.joblib')
+                metrics, report, y_pred = evaluate_model(models['Stacking'], 
+                                                        X_test, y_test, 'Stacking')
+                st.write("Метрики Stacking:", metrics)
+                st.write("Отчет по классификации:")
+                st.json(report)
+                plot_confusion_matrix(y_test, y_pred, 'Stacking')
+                plot_roc_curve(models['Stacking'], X_test, y_test, 'Stacking')
+        
