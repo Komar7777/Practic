@@ -1464,3 +1464,15 @@ def main():
             elif model_name == "MLP":
                 param_name = st.selectbox("Гиперпараметр", 
                                          ["learning_rate_init", "max_iter"])
+                param_values = {
+                    'learning_rate_init': [0.001, 0.01, 0.1],
+                    'max_iter': [200, 500, 1000, 2000]
+                }[param_name]
+                model_class = MLPClassifier
+            elif model_name == "SVM":
+                param_name = st.selectbox("Гиперпараметр", ["C", "gamma"])
+                param_values = {
+                    'C': [0.1, 1, 10, 100],
+                    'gamma': [0.001, 0.01, 0.1, 1]
+                }[param_name]
+                model_class = SVC
