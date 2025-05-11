@@ -827,3 +827,48 @@ def stress_test_model(model, n_samples=10000, n_features=6):
         logger.error(f"Ошибка стресс-тестирования: {str(e)}")
         st.error(f"Ошибка стресс-тестирования: {str(e)}")
         return None
+
+# --- Модуль тестирования подмножеств признаков ---
+def test_feature_subsets(X, y, model, max_features=3):
+    """
+    Тестирует модель на различных подмножествах признаков.
+    """
+    try:
+        results = []
+        feature_combinations = []
+        for r in range(1, max_features + 1):
+            feature_combinations.extend(itertools.combinations(X.columns, r))
+        
+        for features in feature_combinations:
+            X_subset = X[list(features)]
+            X_train, X_test, y_train, y_test = train_test_split(X_subset, y, 
+                                                               test_size=0.2, 
+                                                               random_state=42)
+            model.fit(X_train, y_train)
+            metrics, _, _ = evaluate_model(model, X_test, y_test, 
+                                          f"Features: {features}")
+            results.append({
+                'Features': ', '.join(features),
+                'Accuracy': metrics['Accuracy'],
+                'Precision': metrics['Precision'],
+                'Recall': metrics['Recall'],
+                'F1': metrics['F1'],
+                'Log Loss': metrics['Log Loss'],
+                'ROC-AUC': metrics['ROC-AUC']
+            })
+        
+        results_df = pd.DataFrame(results)
+        plt.figure(figsize=(12, 6))
+        sns.barplot(x='Accuracy', y='Features', data=results_df, palette='magma')
+        plt.title('Точность для подмножеств признаков', fontsize=14)
+        plt.xlabel('Точность', fontsize=12)
+        plt.ylabel('Признаки', fontsize=12)
+        st.pyplot(plt)
+        
+        results_df.to_csv('feature_subset_results.csv', index=False)
+        logger.info("Результаты тестирования подмножеств признаков сохранены")
+        return results_df
+    except Exception as e:
+        logger.error(f"Ошибка тестирования подмножеств признаков: {str(e)}")
+        st.error(f"Ошибка тестирования подмножеств признаков: {str(e)}")
+        return None
