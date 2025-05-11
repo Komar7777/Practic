@@ -444,3 +444,51 @@ def train_knn(X_train, y_train, tune_params=False):
 
 def train_stacking(X_train, y_train):
     """
+    Обучает ансамблевую модель стэкинга, комбинирующую несколько алгоритмов.
+    """
+    try:
+        logger.info("Начало обучения модели стэкинга")
+        start_time = time.time()
+        
+        estimators = [
+            ('rf', RandomForestClassifier(n_estimators=100, random_state=42)),
+            ('gb', GradientBoostingClassifier(n_estimators=100, random_state=42)),
+            ('svm', SVC(probability=True, random_state=42))
+        ]
+        model = StackingClassifier(estimators=estimators, 
+                                  final_estimator=LogisticRegression(), 
+                                  cv=5, n_jobs=-1)
+        
+        model.fit(X_train, y_train)
+        elapsed_time = time.time() - start_time
+        logger.info(f"Обучение модели стэкинга завершено за {elapsed_time:.2f} сек")
+        return model
+    except Exception as e:
+        logger.error(f"Ошибка обучения модели стэкинга: {str(e)}")
+        st.error(f"Ошибка обучения модели стэкинга: {str(e)}")
+        return None
+
+# --- Модуль подбора признаков с Boruta ---
+def select_features_boruta(X, y):
+    """
+    Выполняет подбор признаков с использованием алгоритма Boruta.
+    """
+    try:
+        if not boruta_available:
+            error_msg = "Модуль boruta не установлен. Установите его с помощью команды: pip install boruta"
+            logger.error(error_msg)
+            st.error(error_msg)
+            return None
+        
+        logger.info("Начало подбора признаков с Boruta")
+        rf = RandomForestClassifier(n_jobs=-1, random_state=42)
+        boruta = BorutaPy(rf, n_estimators='auto', verbose=2, random_state=42)
+        boruta.fit(X.values, y.values)
+        
+        selected_features = X.columns[boruta.support_].tolist()
+        logger.info(f"Выбраны признаки: {selected_features}")
+        return selected_features
+    except Exception as e:
+        logger.error(f"Ошибка подбора признаков Boruta: {str(e)}")
+        st.error(f"Ошибка подбора признаков Boruta: {str(e)}")
+        return None
