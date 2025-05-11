@@ -1492,3 +1492,32 @@ def main():
                 st.dataframe(results_df)
                 logger.info(f"Анализ чувствительности для {model_name}, {param_name} завершен")
         
+        # Тестирование подмножеств признаков
+        elif action == "Тестирование подмножеств признаков":
+            st.subheader("Тестирование подмножеств признаков")
+            
+            model_name = st.selectbox("Выберите модель для тестирования", 
+                                     ["Random Forest", "Gradient Boosting", "MLP", 
+                                      "SVM", "KNN", "Stacking"])
+            model_files = {
+                "Random Forest": 'model_rf.joblib',
+                "Gradient Boosting": 'model_gb.joblib',
+                "MLP": 'model_mlp.joblib',
+                "SVM": 'model_svm.joblib',
+                "KNN": 'model_knn.joblib',
+                "Stacking": 'model_stacking.joblib'
+            }
+            model = load_model(model_files[model_name])
+            
+            if model:
+                max_features = st.slider("Максимальное количество признаков в подмножестве", 
+                                        min_value=1, max_value=len(X.columns), value=3)
+                st.write(f"Тестирование модели {model_name} на подмножествах признаков...")
+                results_df = test_feature_subsets(X, y, model, max_features=max_features)
+                if results_df is not None:
+                    st.write("Результаты тестирования подмножеств признаков:")
+                    st.dataframe(results_df)
+                    logger.info(f"Тестирование подмножеств признаков для {model_name} завершено")
+            else:
+                st.error("Ошибка загрузки модели. Убедитесь, что модель обучена и сохранена.")
+        
