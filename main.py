@@ -1550,3 +1550,28 @@ def main():
                 else:
                     st.error("Ошибка подбора признаков Boruta. Проверьте данные или настройки.")
         
+        # Генерация PDF-отчета
+        elif action == "Генерация PDF-отчета":
+            st.subheader("Генерация PDF-отчета")
+            models = {
+                'Random Forest': load_model('model_rf.joblib'),
+                'Gradient Boosting': load_model('model_gb.joblib'),
+                'MLP': load_model('model_mlp.joblib'),
+                'SVM': load_model('model_svm.joblib'),
+                'KNN': load_model('model_knn.joblib'),
+                'Stacking': load_model('model_stacking.joblib')
+            }
+            models = {name: model for name, model in models.items() if model is not None}
+            if models:
+                st.write("Генерация отчета...")
+                latex_code = generate_pdf_report(models, X_test, y_test)
+                if latex_code:
+                    st.write("LaTeX код отчета сгенерирован. Скачайте report.tex и скомпилируйте с помощью latexmk.")
+                    st.download_button("Скачать report.tex", latex_code, file_name="report.tex")
+                    logger.info("PDF-отчет успешно сгенерирован")
+            else:
+                st.error("Не удалось загрузить модели для генерации отчета.")
+
+    except Exception as e:
+        logger.error(f"Критическая ошибка в приложении: {str(e)}")
+        st.error(f"Критическая ошибка: {str(e)}")
