@@ -257,3 +257,58 @@ def plot_scatter_matrix(X):
 
 def plot_3d_scatter(X, y, feature1, feature2, feature3):
     """
+    Визуализирует 3D-график рассеяния для трех признаков.
+    """
+    try:
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        scatter = ax.scatter(X[feature1], X[feature2], X[feature3], 
+                           c=y, cmap='viridis', alpha=0.6)
+        ax.set_xlabel(feature1, fontsize=10)
+        ax.set_ylabel(feature2, fontsize=10)
+        ax.set_zlabel(feature3, fontsize=10)
+        ax.set_title('3D-график рассеяния', fontsize=14)
+        plt.colorbar(scatter, label='Target')
+        st.pyplot(plt)
+        logger.info("3D-график рассеяния построен")
+    except Exception as e:
+        logger.error(f"Ошибка построения 3D-графика: {str(e)}")
+        st.error(f"Ошибка построения 3D-графика: {str(e)}")
+
+# --- Модуль обучения моделей ---
+def train_random_forest(X_train, y_train, tune_params=False):
+    """
+    Обучает модель Random Forest с опциональным подбором гиперпараметров.
+    """
+    try:
+        logger.info("Начало обучения Random Forest")
+        start_time = time.time()
+        
+        if tune_params:
+            param_grid = {
+                'n_estimators': [50, 100, 200, 300],
+                'max_depth': [5, 10, 15, None],
+                'min_samples_split': [2, 5, 10],
+                'min_samples_leaf': [1, 2, 4],
+                'max_features': ['auto', 'sqrt', 'log2']
+            }
+            model = GridSearchCV(RandomForestClassifier(random_state=42), 
+                                param_grid, cv=5, n_jobs=-1, verbose=1)
+        else:
+            model = RandomForestClassifier(n_estimators=100, max_depth=10, 
+                                          min_samples_split=2, min_samples_leaf=1, 
+                                          max_features='sqrt', random_state=42)
+        
+        model.fit(X_train, y_train)
+        elapsed_time = time.time() - start_time
+        logger.info(f"Обучение Random Forest завершено за {elapsed_time:.2f} сек")
+        if tune_params:
+            logger.info(f"Лучшие параметры: {model.best_params_}")
+        return model
+    except Exception as e:
+        logger.error(f"Ошибка обучения Random Forest: {str(e)}")
+        st.error(f"Ошибка обучения Random Forest: {str(e)}")
+        return None
+
+def train_gradient_boosting(X_train, y_train, tune_params=False):
+    """
