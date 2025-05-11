@@ -409,3 +409,38 @@ def train_svm(X_train, y_train, tune_params=False):
         logger.error(f"Ошибка обучения SVM: {str(e)}")
         st.error(f"Ошибка обучения SVM: {str(e)}")
         return None
+
+def train_knn(X_train, y_train, tune_params=False):
+    """
+    Обучает модель KNN с опциональным подбором гиперпараметров.
+    """
+    try:
+        logger.info("Начало обучения KNN")
+        start_time = time.time()
+        
+        if tune_params:
+            param_grid = {
+                'n_neighbors': [3, 5, 7, 9, 11],
+                'weights': ['uniform', 'distance'],
+                'p': [1, 2],
+                'leaf_size': [20, 30, 40]
+            }
+            model = GridSearchCV(KNeighborsClassifier(), 
+                                param_grid, cv=5, n_jobs=-1, verbose=1)
+        else:
+            model = KNeighborsClassifier(n_neighbors=5, weights='uniform', 
+                                        p=2, leaf_size=30)
+        
+        model.fit(X_train, y_train)
+        elapsed_time = time.time() - start_time
+        logger.info(f"Обучение KNN завершено за {elapsed_time:.2f} сек")
+        if tune_params:
+            logger.info(f"Лучшие параметры: {model.best_params_}")
+        return model
+    except Exception as e:
+        logger.error(f"Ошибка обучения KNN: {str(e)}")
+        st.error(f"Ошибка обучения KNN: {str(e)}")
+        return None
+
+def train_stacking(X_train, y_train):
+    """
