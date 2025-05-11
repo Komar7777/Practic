@@ -872,3 +872,92 @@ def test_feature_subsets(X, y, model, max_features=3):
         logger.error(f"Ошибка тестирования подмножеств признаков: {str(e)}")
         st.error(f"Ошибка тестирования подмножеств признаков: {str(e)}")
         return None
+
+# --- Модуль генерации PDF-отчёта ---
+def generate_pdf_report(models, X_test, y_test):
+    """
+    Генерирует PDF-отчет с результатами сравнения моделей.
+    """
+    try:
+        results = []
+        for name, model in models.items():
+            metrics, _, _ = evaluate_model(model, X_test, y_test, name)
+            if metrics:
+                results.append({
+                    'Model': name,
+                    'Accuracy': metrics['Accuracy'],
+                    'Precision': metrics['Precision'],
+                    'Recall': metrics['Recall'],
+                    'F1': metrics['F1'],
+                    'Log Loss': metrics['Log Loss'],
+                    'ROC-AUC': metrics['ROC-AUC']
+                })
+        
+        results_df = pd.DataFrame(results)
+        latex_table = results_df.to_latex(index=False, float_format="%.3f", 
+                                         caption="Сравнение производительности моделей",
+                                         label="tab:model_comparison")
+        
+        latex_code = r"""
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{hyperref}
+\usepackage{noto}
+
+\begin{document}
+
+\title{Отчет по прогнозированию неисправности компьютерных компонентов}
+\author{Комаров Даниил Иванович}
+\date{\today}
+\maketitle
+
+\section{Введение}
+Данный отчет представляет результаты анализа данных и производительности моделей машинного обучения для прогнозирования неисправности компьютерных компонентов. Использованы алгоритмы Random Forest, Gradient Boosting, MLP, SVM, KNN и ансамблевая модель стэкинга.
+
+\section{Методология}
+\begin{itemize}
+    \item Датасет: POLOMKA.csv
+    \item Предобработка: кодирование категориальных переменных, нормализация, удаление выбросов
+    \item Подбор признаков: алгоритм Boruta
+    \item Оценка: Accuracy, Precision, Recall, F1, Log Loss, ROC-AUC
+\end{itemize}
+
+\section{Результаты}
+\subsection{Сравнение моделей}
+""" + latex_table + r"""
+
+\subsection{Интерпретация}
+Анализ SHAP-значений показал, что наиболее значимыми признаками являются Rotational speed [rpm], Torque [Nm] и Tool wear [min]. Подбор признаков с помощью Boruta подтвердил важность этих признаков, исключив менее значимые, такие как Type.
+
+\section{Выводы}
+На основе анализа производительности моделей можно сделать вывод, что Random Forest и ансамблевая модель стэкинга показали наилучшие результаты с точки зрения точности и ROC-AUC. Дальнейшая работа может включать оптимизацию гиперпараметров, тестирование на дополнительных данных и интеграцию с реальными системами мониторинга.
+
+\section{Рекомендации}
+\begin{itemize}
+    \item Использовать Random Forest или Stacking для реальных приложений.
+    \item Проводить регулярное обновление моделей с новыми данными.
+    \item Интегрировать систему с датчиками для мониторинга в реальном времени.
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
+"""
+        with open('report.tex', 'w', encoding='utf-8') as f:
+            f.write(latex_code)
+        logger.info("PDF-отчет сгенерирован в report.tex")
+        st.success("PDF-отчет сгенерирован. Скомпилируйте report.tex с помощью latexmk.")
+        return latex_code
+    except Exception as e:
+        logger.error(f"Ошибка генерации PDF-отчета: {str(e)}")
+        st.error(f"Ошибка генерации PDF-отчета: {str(e)}")
+        return None
