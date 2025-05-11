@@ -60,3 +60,46 @@ logger = logging.getLogger()
 
 # Игнорирование предупреждений для чистоты вывода
 warnings.filterwarnings('ignore')
+
+# Установка стиля визуализаций
+sns.set(style="whitegrid")
+plt.rcParams['figure.figsize'] = (10, 6)
+plt.rcParams['font.size'] = 12
+
+# --- Модуль загрузки данных ---
+def load_dataset(local_path="POLOMKA.csv", url="https://raw.githubusercontent.com/[ваш_репозиторий]/main/POLOMKA.csv"):
+    """
+    Загружает датасет из локального файла или URL, пробуя разные кодировки.
+    """
+    encodings = ['utf-8', 'cp1251', 'latin-1', 'iso-8859-1']
+    try:
+        if os.path.exists(local_path):
+            logger.info("Попытка загрузки датасета из локального файла")
+            for encoding in encodings:
+                try:
+                    data = pd.read_csv(local_path, encoding=encoding)
+                    logger.info(f"Датасет успешно загружен с кодировкой {encoding}")
+                    return data
+                except UnicodeDecodeError:
+                    logger.warning(f"Не удалось загрузить с кодировкой {encoding}")
+                    continue
+            raise UnicodeDecodeError("Не удалось определить кодировку файла")
+        else:
+            logger.info("Локальный файл не найден, попытка загрузки по URL")
+            if url:
+                urlretrieve(url, local_path)
+                for encoding in encodings:
+                    try:
+                        data = pd.read_csv(local_path, encoding=encoding)
+                        logger.info(f"Датасет успешно загружен с кодировкой {encoding}")
+                        return data
+                    except UnicodeDecodeError:
+                        logger.warning(f"Не удалось загрузить с кодировкой {encoding}")
+                        continue
+                raise UnicodeDecodeError("Не удалось определить кодировку файла")
+            else:
+                raise FileNotFoundError("URL не указан")
+    except Exception as e:
+        logger.error(f"Ошибка загрузки датасета: {str(e)}")
+        st.error(f"Ошибка загрузки датасета: {str(e)}")
+        return None
