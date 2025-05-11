@@ -103,3 +103,22 @@ def load_dataset(local_path="POLOMKA.csv", url="https://raw.githubusercontent.co
         logger.error(f"Ошибка загрузки датасета: {str(e)}")
         st.error(f"Ошибка загрузки датасета: {str(e)}")
         return None
+# --- Модуль генерации синтетических данных ---
+def generate_synthetic_data(n_samples=1000, n_features=6, n_classes=2):
+    """
+    Генерирует синтетические данные для тестирования моделей.
+    """
+    try:
+        X, y = make_classification(n_samples=n_samples, n_features=n_features, 
+                                  n_classes=n_classes, n_informative=n_features-1, 
+                                  n_redundant=1, random_state=42)
+        columns = ['Type', 'Air temperature [K]', 'Process temperature [K]', 
+                   'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]']
+        df = pd.DataFrame(X, columns=columns[:n_features])
+        df['Target'] = y
+        logger.info(f"Сгенерирован синтетический датасет размером {df.shape}")
+        return df
+    except Exception as e:
+        logger.error(f"Ошибка генерации синтетических данных: {str(e)}")
+        st.error(f"Ошибка генерации синтетических данных: {str(e)}")
+        return None
