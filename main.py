@@ -123,3 +123,36 @@ def generate_synthetic_data(n_samples=1000, n_features=6, n_classes=2):
         logger.error(f"Ошибка генерации синтетических данных: {str(e)}")
         st.error(f"Ошибка генерации синтетических данных: {str(e)}")
         return None
+
+# --- Модуль предобработки данных ---
+def detect_outliers_iqr(data, column):
+    """
+    Обнаруживает выбросы методом межквартильного размаха.
+    """
+    try:
+        Q1 = data[column].quantile(0.25)
+        Q3 = data[column].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        outliers = data[(data[column] < lower_bound) | (data[column] > upper_bound)][column]
+        return outliers
+    except KeyError as e:
+        logger.error(f"Столбец {column} отсутствует: {str(e)}")
+        st.error(f"Столбец {column} отсутствует")
+        return None
+
+def preprocess_data(data):
+    """
+    Обрабатывает данные: кодирование, нормализация, удаление выбросов.
+    """
+    try:
+        logger.info("Начало предобработки данных")
+        df = data.copy()
+        
+        # Проверка пропущенных значений
+        missing_values = df.isnull().sum()
+        if missing_values.sum() > 0:
+            logger.warning(f"Обнаружены пропущенные значения: {missing_values.to_dict()}")
+            df.fillna(df.median(numeric_only=True), inplace=True)
+        
