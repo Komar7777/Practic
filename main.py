@@ -1138,3 +1138,33 @@ def main():
                                       "Тестирование подмножеств признаков", 
                                       "Подбор признаков Boruta", "Генерация PDF-отчета"])
         
+        # Анализ данных
+        if action == "Анализ данных":
+            st.subheader("Анализ датасета")
+            st.write("Размер датасета:", data.shape)
+            st.write("Первые строки:")
+            st.dataframe(data.head())
+            
+            st.write("Корреляции между признаками:")
+            analyze_correlations(X)
+            
+            st.write("Распределение признаков:")
+            for col in X.columns:
+                plot_feature_distribution(data, col)
+            
+            st.write("Box Plots для числовых признаков:")
+            numeric_columns = [col for col in ['Air temperature [K]', 
+                                              'Process temperature [K]', 
+                                              'Rotational speed [rpm]', 
+                                              'Torque [Nm]', 'Tool wear [min]'] 
+                              if col in data.columns]
+            plot_box_plots(data, numeric_columns)
+            
+            st.write("Матрица рассеяния:")
+            plot_scatter_matrix(X)
+            
+            st.write("3D-график рассеяния:")
+            if len(X.columns) >= 3:
+                feature1, feature2, feature3 = X.columns[:3]
+                plot_3d_scatter(X, y, feature1, feature2, feature3)
+        
