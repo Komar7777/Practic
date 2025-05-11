@@ -492,3 +492,33 @@ def select_features_boruta(X, y):
         logger.error(f"Ошибка подбора признаков Boruta: {str(e)}")
         st.error(f"Ошибка подбора признаков Boruta: {str(e)}")
         return None
+# --- Модуль кросс-валидации ---
+def perform_cross_validation(model, X, y, cv=5):
+    """
+    Выполняет кросс-валидацию модели.
+    """
+    try:
+        scores = {
+            'accuracy': cross_val_score(model, X, y, cv=cv, scoring='accuracy', 
+                                      n_jobs=-1),
+            'precision': cross_val_score(model, X, y, cv=cv, scoring='precision', 
+                                       n_jobs=-1),
+            'recall': cross_val_score(model, X, y, cv=cv, scoring='recall', 
+                                    n_jobs=-1),
+            'f1': cross_val_score(model, X, y, cv=cv, scoring='f1', n_jobs=-1),
+            'roc_auc': cross_val_score(model, X, y, cv=cv, scoring='roc_auc', 
+                                      n_jobs=-1)
+        }
+        results = {
+            'Accuracy': np.mean(scores['accuracy']),
+            'Precision': np.mean(scores['precision']),
+            'Recall': np.mean(scores['recall']),
+            'F1': np.mean(scores['f1']),
+            'ROC-AUC': np.mean(scores['roc_auc'])
+        }
+        logger.info(f"Кросс-валидация: {results}")
+        return results
+    except Exception as e:
+        logger.error(f"Ошибка кросс-валидации: {str(e)}")
+        st.error(f"Ошибка кросс-валидации: {str(e)}")
+        return None
