@@ -1414,3 +1414,27 @@ def main():
                     st.write(f"Построение SHAP значений для {model_name}...")
                     plot_shap_values(model, X_test, model_name)
         
+        # Стресс-тестирование
+        elif action == "Стресс-тестирование":
+            st.subheader("Стресс-тестирование моделей")
+            
+            model_name = st.selectbox("Выберите модель для стресс-тестирования", 
+                                     ["Random Forest", "Gradient Boosting", "MLP", 
+                                      "SVM", "KNN", "Stacking"])
+            model_files = {
+                "Random Forest": 'model_rf.joblib',
+                "Gradient Boosting": 'model_gb.joblib',
+                "MLP": 'model_mlp.joblib',
+                "SVM": 'model_svm.joblib',
+                "KNN": 'model_knn.joblib',
+                "Stacking": 'model_stacking.joblib'
+            }
+            model = load_model(model_files[model_name])
+            
+            if model:
+                n_samples = st.number_input("Количество записей для стресс-теста", 
+                                           min_value=1000, value=10000, step=1000)
+                metrics = stress_test_model(model, n_samples=n_samples)
+                if metrics:
+                    st.write("Результаты стресс-тестирования:", metrics)
+        
