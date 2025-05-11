@@ -155,6 +155,7 @@ def preprocess_data(data):
         if missing_values.sum() > 0:
             logger.warning(f"Обнаружены пропущенные значения: {missing_values.to_dict()}")
             df.fillna(df.median(numeric_only=True), inplace=True)
+            
         # Удаление ненужных столбцов
         columns_to_drop = ['UDI', 'Product ID', 'Failure Type']
         df = df.drop([col for col in columns_to_drop if col in df.columns], axis=1)
@@ -189,3 +190,39 @@ def preprocess_data(data):
         logger.error(f"Ошибка предобработки данных: {str(e)}")
         st.error(f"Ошибка предобработки: {str(e)}")
         return None, None, None, None
+    
+# --- Модуль анализа данных ---
+def analyze_correlations(X):
+    """
+    Анализирует корреляции между признаками.
+    """
+    try:
+        corr_matrix = X.corr()
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt='.2f', 
+                    linewidths=0.5, cbar_kws={'label': 'Корреляция'})
+        plt.title('Матрица корреляций', fontsize=14, pad=10)
+        st.pyplot(plt)
+        logger.info("Матрица корреляций построена")
+    except Exception as e:
+        logger.error(f"Ошибка анализа корреляций: {str(e)}")
+        st.error(f"Ошибка анализа корреляций: {str(e)}")
+
+def plot_feature_distribution(data, column):
+    """
+    Визуализирует распределение признака.
+    """
+    try:
+        plt.figure(figsize=(8, 5))
+        sns.histplot(data[column], kde=True, bins=30, color='skyblue')
+        plt.title(f'Распределение {column}', fontsize=14)
+        plt.xlabel(column, fontsize=12)
+        plt.ylabel('Частота', fontsize=12)
+        st.pyplot(plt)
+        logger.info(f"Распределение {column} построено")
+    except Exception as e:
+        logger.error(f"Ошибка построения распределения: {str(e)}")
+        st.error(f"Ошибка построения распределения: {str(e)}")
+
+def plot_box_plots(data, columns):
+    """
