@@ -1521,3 +1521,32 @@ def main():
             else:
                 st.error("Ошибка загрузки модели. Убедитесь, что модель обучена и сохранена.")
         
+        # Подбор признаков Boruta
+        elif action == "Подбор признаков Boruta":
+            st.subheader("Подбор признаков с использованием Boruta")
+            if not boruta_available:
+                st.error("Модуль boruta не установлен. Установите его с помощью команды: `pip install boruta`")
+                st.markdown("""
+                **Инструкция по установке:**
+                1. Откройте терминал или командную строку.
+                2. Активируйте ваше виртуальное окружение (если используется).
+                3. Выполните команду: `pip install boruta`
+                4. Перезапустите приложение после установки.
+                """)
+                if st.button("Проверить установку boruta"):
+                    try:
+                        from boruta import BorutaPy
+                        st.success("Модуль boruta успешно установлен!")
+                        globals()['boruta_available'] = True
+                        globals()['BorutaPy'] = BorutaPy
+                    except ImportError:
+                        st.error("Модуль boruta все еще не установлен. Проверьте правильность выполнения команды установки.")
+            else:
+                st.write("Выполняется подбор признаков...")
+                selected_features = select_features_boruta(X, y)
+                if selected_features:
+                    st.write("Выбранные признаки:", selected_features)
+                    logger.info(f"Подбор признаков Boruta завершен: {selected_features}")
+                else:
+                    st.error("Ошибка подбора признаков Boruta. Проверьте данные или настройки.")
+        
