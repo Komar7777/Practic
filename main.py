@@ -1304,3 +1304,50 @@ def main():
                 st.write("Результаты сравнения:")
                 st.dataframe(results_df)
         
+        # Предсказание
+        elif action == "Сделать предсказание":
+            st.subheader("Предсказание неисправности")
+            
+            model_name = st.selectbox("Выберите модель", 
+                                     ["Random Forest", "Gradient Boosting", "MLP", 
+                                      "SVM", "KNN", "Stacking"])
+            model_files = {
+                "Random Forest": 'model_rf.joblib',
+                "Gradient Boosting": 'model_gb.joblib',
+                "MLP": 'model_mlp.joblib',
+                "SVM": 'model_svm.joblib',
+                "KNN": 'model_knn.joblib',
+                "Stacking": 'model_stacking.joblib'
+            }
+            model = load_model(model_files[model_name])
+            
+            if model:
+                st.write("Введите данные для предсказания:")
+                type_input = st.selectbox("Тип продукта", ["L", "M", "H"])
+                air_temp = st.number_input("Температура воздуха [K]", 
+                                          min_value=0.0, value=298.0, step=0.1)
+                process_temp = st.number_input("Температура процесса [K]", 
+                                              min_value=0.0, value=308.0, step=0.1)
+                rpm = st.number_input("Скорость вращения [rpm]", 
+                                     min_value=0, value=1500, step=10)
+                torque = st.number_input("Крутящий момент [Nm]", 
+                                        min_value=0.0, value=40.0, step=0.1)
+                tool_wear = st.number_input("Износ инструмента [min]", 
+                                           min_value=0, value=0, step=1)
+                
+                if st.button("Сделать предсказание"):
+                    input_data = pd.DataFrame({
+                        'Type': [le.transform([type_input])[0]],
+                        'Air temperature [K]': [air_temp],
+                        'Process temperature [K]': [process_temp],
+                        'Rotational speed [rpm]': [rpm],
+                        'Torque [Nm]': [torque],
+                        'Tool wear [min]': [tool_wear]
+                    })
+                    
+                    prediction = predict_with_model(model, input_data, scaler, le)
+                    if prediction is not None:
+                        result = "Неисправность" if prediction[0] == 1 else "Нет неисправности"
+                        st.write(f"Результат ({model_name}): {result}")
+                        logger.info(f"Предсказание ({model_name}): {result}")
+        
