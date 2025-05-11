@@ -1262,3 +1262,27 @@ def main():
                 plot_confusion_matrix(y_test, y_pred, 'Stacking')
                 plot_roc_curve(models['Stacking'], X_test, y_test, 'Stacking')
         
+        # Загрузка моделей
+        elif action == "Загрузить модели":
+            st.subheader("Загрузка моделей")
+            
+            models = {
+                'Random Forest': load_model('model_rf.joblib'),
+                'Gradient Boosting': load_model('model_gb.joblib'),
+                'MLP': load_model('model_mlp.joblib'),
+                'SVM': load_model('model_svm.joblib'),
+                'KNN': load_model('model_knn.joblib'),
+                'Stacking': load_model('model_stacking.joblib')
+            }
+            
+            for name, model in models.items():
+                if model:
+                    metrics, report, y_pred = evaluate_model(model, X_test, y_test, name)
+                    st.write(f"Метрики {name}:", metrics)
+                    st.write("Отчет по классификации:")
+                    st.json(report)
+                    plot_confusion_matrix(y_test, y_pred, name)
+                    plot_roc_curve(model, X_test, y_test, name)
+                    if name in ['Random Forest', 'Gradient Boosting']:
+                        plot_feature_importance(model, X, name)
+        
