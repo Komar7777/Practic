@@ -707,3 +707,41 @@ def hyperparameter_sensitivity(model_class, X_train, y_train, param_name, param_
         logger.error(f"Ошибка анализа чувствительности: {str(e)}")
         st.error(f"Ошибка анализа чувствительности: {str(e)}")
         return None
+
+# --- Модуль сравнения моделей ---
+def compare_models(models, X_test, y_test):
+    """
+    Сравнивает производительность моделей.
+    """
+    try:
+        results = []
+        for name, model in models.items():
+            metrics, _, _ = evaluate_model(model, X_test, y_test, name)
+            if metrics:
+                results.append({
+                    'Model': name,
+                    'Accuracy': metrics['Accuracy'],
+                    'Precision': metrics['Precision'],
+                    'Recall': metrics['Recall'],
+                    'F1': metrics['F1'],
+                    'Log Loss': metrics['Log Loss'],
+                    'ROC-AUC': metrics['ROC-AUC']
+                })
+        
+        results_df = pd.DataFrame(results)
+        plt.figure(figsize=(12, 6))
+        sns.barplot(x='Model', y='Accuracy', data=results_df, palette='viridis')
+        plt.title('Сравнение точности моделей', fontsize=14)
+        plt.xlabel('Модель', fontsize=12)
+        plt.ylabel('Точность', fontsize=12)
+        st.pyplot(plt)
+        
+        results_df.to_csv('model_comparison.csv', index=False)
+        with open('model_comparison.json', 'w') as f:
+            json.dump(results, f)
+        logger.info("Результаты сравнения сохранены в CSV и JSON")
+        return results_df
+    except Exception as e:
+        logger.error(f"Ошибка сравнения моделей: {str(e)}")
+        st.error(f"Ошибка сравнения моделей: {str(e)}")
+        return None
