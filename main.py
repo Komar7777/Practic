@@ -554,3 +554,115 @@ def load_model(filename):
         logger.error(f"Ошибка загрузки модели: {str(e)}")
         st.error(f"Ошибка загрузки модели: {str(e)}")
         return None
+
+# --- Модуль оценки моделей ---
+def evaluate_model(model, X_test, y_test, model_name):
+    """
+    Оценивает производительность модели.
+    """
+    try:
+        y_pred = model.predict(X_test)
+        y_pred_proba = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.decision_function(X_test)
+        metrics = {
+            'Accuracy': accuracy_score(y_test, y_pred),
+            'Precision': precision_score(y_test, y_pred, zero_division=0),
+            'Recall': recall_score(y_test, y_pred, zero_division=0),
+            'F1': f1_score(y_test, y_pred, zero_division=0),
+            'Log Loss': log_loss(y_test, y_pred_proba) if hasattr(model, 'predict_proba') else None,
+            'ROC-AUC': roc_auc_score(y_test, y_pred_proba)
+        }
+        report = classification_report(y_test, y_pred, output_dict=True)
+        logger.info(f"Метрики {model_name}: {metrics}")
+        return metrics, report, y_pred
+    except Exception as e:
+        logger.error(f"Ошибка оценки модели {model_name}: {str(e)}")
+        st.error(f"Ошибка оценки модели {model_name}: {str(e)}")
+        return None, None, None
+
+def plot_confusion_matrix(y_test, y_pred, model_name):
+    """
+    Визуализирует матрицу ошибок.
+    """
+    try:
+        cm = confusion_matrix(y_test, y_pred)
+        plt.figure(figsize=(6, 4))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
+        plt.title(f'Матрица ошибок ({model_name})', fontsize=14)
+        plt.xlabel('Предсказано', fontsize=12)
+        plt.ylabel('Фактически', fontsize=12)
+        st.pyplot(plt)
+        logger.info(f"Матрица ошибок для {model_name} построена")
+    except Exception as e:
+        logger.error(f"Ошибка построения матрицы ошибок: {str(e)}")
+        st.error(f"Ошибка построения матрицы ошибок: {str(e)}")
+
+def plot_roc_curve(model, X_test, y_test, model_name):
+    """
+    Визуализирует ROC-кривую.
+    """
+    try:
+        if hasattr(model, 'predict_proba'):
+            y_pred_proba = model.predict_proba(X_test)[:, 1]
+        else:
+            y_pred_proba = model.decision_function(X_test)
+        fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
+        roc_auc = auc(fpr, tpr)
+        
+        plt.figure(figsize=(6, 4))
+        plt.plot(fpr, tpr, label=f'ROC кривая (AUC = {roc_auc:.2f})', color='darkorange')
+        plt.plot([0, 1], [0, 1], 'k--', label='Случайная модель')
+        plt.title(f'ROC кривая ({model_name})', fontsize=14)
+        plt.xlabel('False Positive Rate', fontsize=12)
+        plt.ylabel('True Positive Rate', fontsize=12)
+        plt.legend(loc='lower right')
+        st.pyplot(plt)
+        logger.info(f"ROC кривая для {model_name} построена")
+    except Exception as e:
+        logger.error(f"Ошибка построения ROC кривой: {str(e)}")
+        st.error(f"Ошибка построения ROC кривой: {str(e)}")
+
+def plot_feature_importance(model, X, model_name):
+    """
+    Визуализирует важность признаков.
+    """
+    try:
+        if hasattr(model, 'feature_importances_'):
+            feature_importance = pd.DataFrame({
+                'feature': X.columns,
+                'importance': model.feature_importances_
+            }).sort_values('importance', ascending=False)
+            
+            plt.figure(figsize=(8, 5))
+            sns.barplot(x='importance', y='feature', data=feature_importance, 
+                       color='salmon')
+            plt.title(f'Важность признаков ({model_name})', fontsize=14)
+            plt.xlabel('Важность', fontsize=12)
+            plt.ylabel('Признак', fontsize=12)
+            st.pyplot(plt)
+            logger.info(f"Важность признаков для {model_name} построена")
+    except Exception as e:
+        logger.error(f"Ошибка построения важности признаков: {str(e)}")
+        st.error(f"Ошибка построения важности признаков: {str(e)}")
+
+def plot_shap_values(model, X, model_name):
+    """
+    Визуализирует SHAP-значения для интерпретации модели.
+    """
+    try:
+        if not shap_available:
+            error_msg = "Модуль shap не установлен. Установите его с помощью команды: pip install shap"
+            logger.error(error_msg)
+            st.error(error_msg)
+            return
+        
+        explainer = shap.TreeExplainer(model) if hasattr(model, 'feature_importances_') else shap.KernelExplainer(model.predict, X.sample(100))
+        shap_values = explainer.shap_values(X)
+        
+        plt.figure(figsize=(10, 6))
+        shap.summary_plot(shap_values, X, show=False)
+        plt.title(f'SHAP значения ({model_name})', fontsize=14)
+        st.pyplot(plt)
+        logger.info(f"SHAP значения для {model_name} построены")
+    except Exception as e:
+        logger.error(f"Ошибка построения SHAP значений: {str(e)}")
+        st.error(f"Ошибка построения SHAP значений: {str(e)}")
