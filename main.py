@@ -30,3 +30,33 @@ from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 import joblib
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
+import streamlit as st
+from datetime import datetime
+import itertools
+import unittest
+
+# Попытка импорта Boruta с обработкой ошибки
+try:
+    from boruta import BorutaPy
+    boruta_available = True
+except ImportError:
+    boruta_available = False
+    BorutaPy = None
+
+# Попытка импорта SHAP с обработкой ошибки
+try:
+    import shap
+    shap_available = True
+except ImportError:
+    shap_available = False
+    shap = None
+
+# Настройка логирования
+logging.basicConfig(filename='training.log', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+
+# Игнорирование предупреждений для чистоты вывода
+warnings.filterwarnings('ignore')
