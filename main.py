@@ -155,4 +155,37 @@ def preprocess_data(data):
         if missing_values.sum() > 0:
             logger.warning(f"Обнаружены пропущенные значения: {missing_values.to_dict()}")
             df.fillna(df.median(numeric_only=True), inplace=True)
+        # Удаление ненужных столбцов
+        columns_to_drop = ['UDI', 'Product ID', 'Failure Type']
+        df = df.drop([col for col in columns_to_drop if col in df.columns], axis=1)
         
+        # Кодирование категориальной переменной
+        le = LabelEncoder()
+        if 'Type' in df.columns:
+            df['Type'] = le.fit_transform(df['Type'])
+        
+        # Обработка выбросов
+        numeric_columns = ['Air temperature [K]', 'Process temperature [K]', 
+                          'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]']
+        numeric_columns = [col for col in numeric_columns if col in df.columns]
+        for col in numeric_columns:
+            outliers = detect_outliers_iqr(df, col)
+            if outliers is not None and not outliers.empty:
+                logger.info(f"Обнаружены выбросы в {col}: {len(outliers)}")
+                df[col] = df[col].clip(lower=df[col].quantile(0.05), 
+                                      upper=df[col].quantile(0.95))
+        
+        # Нормализация
+        scaler = StandardScaler()
+        df[numeric_columns] = scaler.fit_transform(df[numeric_columns])
+        
+        # Разделение данных
+        X = df.drop('Target', axis=1)
+        y = df['Target']
+        
+        logger.info("Предобработка завершена")
+        return X, y, le, scaler
+    except Exception as e:
+        logger.error(f"Ошибка предобработки данных: {str(e)}")
+        st.error(f"Ошибка предобработки: {str(e)}")
+        return None, None, None, None
