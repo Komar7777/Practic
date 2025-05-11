@@ -1476,3 +1476,19 @@ def main():
                     'gamma': [0.001, 0.01, 0.1, 1]
                 }[param_name]
                 model_class = SVC
+            else:  # KNN
+                param_name = st.selectbox("Гиперпараметр", ["n_neighbors", "weights"])
+                param_values = {
+                    'n_neighbors': [3, 5, 7, 9, 11],
+                    'weights': ['uniform', 'distance']
+                }[param_name]
+                model_class = KNeighborsClassifier
+            
+            st.write(f"Анализ чувствительности гиперпараметра {param_name} для {model_name}...")
+            results_df = hyperparameter_sensitivity(model_class, X_train, y_train, 
+                                                  param_name, param_values)
+            if results_df is not None:
+                st.write("Результаты анализа чувствительности:")
+                st.dataframe(results_df)
+                logger.info(f"Анализ чувствительности для {model_name}, {param_name} завершен")
+        
