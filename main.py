@@ -492,6 +492,7 @@ def select_features_boruta(X, y):
         logger.error(f"Ошибка подбора признаков Boruta: {str(e)}")
         st.error(f"Ошибка подбора признаков Boruta: {str(e)}")
         return None
+    
 # --- Модуль кросс-валидации ---
 def perform_cross_validation(model, X, y, cv=5):
     """
@@ -521,4 +522,35 @@ def perform_cross_validation(model, X, y, cv=5):
     except Exception as e:
         logger.error(f"Ошибка кросс-валидации: {str(e)}")
         st.error(f"Ошибка кросс-валидации: {str(e)}")
+        return None
+
+# --- Модуль сохранения и загрузки ---
+def save_model(model, filename):
+    """
+    Сохраняет модель в файл.
+    """
+    try:
+        joblib.dump(model, filename)
+        logger.info(f"Модель сохранена как {filename}")
+        st.success(f"Модель сохранена как {filename}")
+    except Exception as e:
+        logger.error(f"Ошибка сохранения модели: {str(e)}")
+        st.error(f"Ошибка сохранения модели: {str(e)}")
+
+def load_model(filename):
+    """
+    Загружает модель из файла.
+    """
+    try:
+        if os.path.exists(filename):
+            model = joblib.load(filename)
+            logger.info(f"Модель загружена из {filename}")
+            return model
+        else:
+            logger.error(f"Файл модели {filename} не найден")
+            st.error(f"Файл модели {filename} не найден")
+            return None
+    except Exception as e:
+        logger.error(f"Ошибка загрузки модели: {str(e)}")
+        st.error(f"Ошибка загрузки модели: {str(e)}")
         return None
