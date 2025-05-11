@@ -1575,3 +1575,6 @@ def main():
     except Exception as e:
         logger.error(f"Критическая ошибка в приложении: {str(e)}")
         st.error(f"Критическая ошибка: {str(e)}")
+        
+if __name__ == "__main__":
+    main()
