@@ -808,3 +808,22 @@ def test_on_subsamples(X, y, model, sample_sizes=[0.1, 0.3, 0.5, 0.7, 0.9]):
         logger.error(f"Ошибка тестирования на подвыборках: {str(e)}")
         st.error(f"Ошибка тестирования на подвыборках: {str(e)}")
         return None
+
+# --- Модуль стресс-тестирования ---
+def stress_test_model(model, n_samples=10000, n_features=6):
+    """
+    Проводит стресс-тестирование модели на синтетических данных.
+    """
+    try:
+        synthetic_data = generate_synthetic_data(n_samples, n_features)
+        X, y, _, scaler = preprocess_data(synthetic_data)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, 
+                                                           random_state=42)
+        model.fit(X_train, y_train)
+        metrics, _, _ = evaluate_model(model, X_test, y_test, "Stress Test")
+        logger.info(f"Стресс-тестирование: {metrics}")
+        return metrics
+    except Exception as e:
+        logger.error(f"Ошибка стресс-тестирования: {str(e)}")
+        st.error(f"Ошибка стресс-тестирования: {str(e)}")
+        return None
