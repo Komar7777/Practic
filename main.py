@@ -226,3 +226,34 @@ def plot_feature_distribution(data, column):
 
 def plot_box_plots(data, columns):
     """
+    Визуализирует box plots для числовых признаков.
+    """
+    try:
+        plt.figure(figsize=(12, 6))
+        for i, col in enumerate(columns, 1):
+            plt.subplot(1, len(columns), i)
+            sns.boxplot(y=data[col], color='lightgreen')
+            plt.title(f'Box Plot: {col}', fontsize=12)
+            plt.ylabel(col, fontsize=10)
+        plt.tight_layout()
+        st.pyplot(plt)
+        logger.info("Box plots построены")
+    except Exception as e:
+        logger.error(f"Ошибка построения box plots: {str(e)}")
+        st.error(f"Ошибка построения box plots: {str(e)}")
+
+def plot_scatter_matrix(X):
+    """
+    Визуализирует матрицу рассеяния.
+    """
+    try:
+        sns.pairplot(X, diag_kind='kde', plot_kws={'alpha': 0.5})
+        plt.suptitle('Матрица рассеяния', y=1.02, fontsize=14)
+        st.pyplot(plt)
+        logger.info("Матрица рассеяния построена")
+    except Exception as e:
+        logger.error(f"Ошибка построения матрицы рассеяния: {str(e)}")
+        st.error(f"Ошибка построения матрицы рассеяния: {str(e)}")
+
+def plot_3d_scatter(X, y, feature1, feature2, feature3):
+    """
