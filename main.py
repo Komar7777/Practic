@@ -961,3 +961,111 @@ def generate_pdf_report(models, X_test, y_test):
         logger.error(f"Ошибка генерации PDF-отчета: {str(e)}")
         st.error(f"Ошибка генерации PDF-отчета: {str(e)}")
         return None
+
+# --- Модуль юнит-тестирования ---
+class TestPredictionSystem(unittest.TestCase):
+    """
+    Юнит-тесты для проверки функциональности системы.
+    """
+    def setUp(self):
+        """
+        Инициализация тестового окружения.
+        """
+        self.data = generate_synthetic_data(n_samples=100)
+        self.X, self.y, self.le, self.scaler = preprocess_data(self.data)
+        self.model = RandomForestClassifier(random_state=42)
+        self.model.fit(self.X, self.y)
+    
+    def test_load_dataset(self):
+        """
+        Проверяет корректность загрузки датасета.
+        """
+        data = generate_synthetic_data()
+        self.assertIsNotNone(data)
+        self.assertIsInstance(data, pd.DataFrame)
+    
+    def test_preprocess_data(self):
+        """
+        Проверяет корректность предобработки данных.
+        """
+        X, y, le, scaler = preprocess_data(self.data)
+        self.assertIsNotNone(X)
+        self.assertIsNotNone(y)
+        self.assertIsInstance(X, pd.DataFrame)
+        self.assertIsInstance(y, pd.Series)
+        self.assertIsInstance(le, LabelEncoder)
+        self.assertIsInstance(scaler, StandardScaler)
+    
+    def test_model_training(self):
+        """
+        Проверяет, что модель обучается без ошибок.
+        """
+        model = train_random_forest(self.X, self.y, tune_params=False)
+        self.assertIsNotNone(model)
+        self.assertTrue(hasattr(model, 'predict'))
+    
+    def test_prediction(self):
+        """
+        Проверяет, что модель возвращает предсказания.
+        """
+        input_data = self.X.iloc[:1]
+        prediction = predict_with_model(self.model, input_data, self.scaler, self.le)
+        self.assertIsNotNone(prediction)
+        self.assertEqual(len(prediction), 1)
+    
+    def test_evaluate_model(self):
+        """
+        Проверяет корректность оценки модели.
+        """
+        metrics, report, y_pred = evaluate_model(self.model, self.X, self.y, "Test")
+        self.assertIsNotNone(metrics)
+        self.assertIsNotNone(report)
+        self.assertIsNotNone(y_pred)
+        self.assertIn('Accuracy', metrics)
+        self.assertIn('Precision', metrics)
+        self.assertIn('Recall', metrics)
+        self.assertIn('F1', metrics)
+    
+    def test_save_load_model(self):
+        """
+        Проверяет сохранение и загрузку модели.
+        """
+        save_model(self.model, 'test_model.joblib')
+        loaded_model = load_model('test_model.joblib')
+        self.assertIsNotNone(loaded_model)
+        self.assertTrue(hasattr(loaded_model, 'predict'))
+    
+    def test_boruta_selection(self):
+        """
+        Проверяет подбор признаков Boruta.
+        """
+        if boruta_available:
+            selected_features = select_features_boruta(self.X, self.y)
+            self.assertIsNotNone(selected_features)
+            self.assertIsInstance(selected_features, list)
+        else:
+            self.skipTest("Boruta не установлен")
+    
+    def test_shap_analysis(self):
+        """
+        Проверяет SHAP анализ.
+        """
+        if shap_available:
+            try:
+                explainer = shap.TreeExplainer(self.model)
+                shap_values = explainer.shap_values(self.X)
+                self.assertIsNotNone(shap_values)
+            except Exception as e:
+                self.fail(f"SHAP анализ завершился с ошибкой: {str(e)}")
+        else:
+            self.skipTest("SHAP не установлен")
+    
+    def test_pdf_generation(self):
+        """
+        Проверяет генерацию PDF-отчета.
+        """
+        models = {'Random Forest': self.model}
+        latex_code = generate_pdf_report(models, self.X, self.y)
+        self.assertIsNotNone(latex_code)
+        self.assertIsInstance(latex_code, str)
+        self.assertTrue(r'\documentclass' in latex_code)
