@@ -312,3 +312,68 @@ def train_random_forest(X_train, y_train, tune_params=False):
 
 def train_gradient_boosting(X_train, y_train, tune_params=False):
     """
+    Обучает модель Gradient Boosting с опциональным подбором гиперпараметров.
+    """
+    try:
+        logger.info("Начало обучения Gradient Boosting")
+        start_time = time.time()
+        
+        if tune_params:
+            param_grid = {
+                'n_estimators': [50, 100, 200],
+                'learning_rate': [0.01, 0.1, 0.2],
+                'max_depth': [3, 5, 7],
+                'subsample': [0.8, 0.9, 1.0],
+                'min_samples_split': [2, 5]
+            }
+            model = GridSearchCV(GradientBoostingClassifier(random_state=42), 
+                                param_grid, cv=5, n_jobs=-1, verbose=1)
+        else:
+            model = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, 
+                                              max_depth=3, subsample=1.0, 
+                                              min_samples_split=2, random_state=42)
+        
+        model.fit(X_train, y_train)
+        elapsed_time = time.time() - start_time
+        logger.info(f"Обучение Gradient Boosting завершено за {elapsed_time:.2f} сек")
+        if tune_params:
+            logger.info(f"Лучшие параметры: {model.best_params_}")
+        return model
+    except Exception as e:
+        logger.error(f"Ошибка обучения Gradient Boosting: {str(e)}")
+        st.error(f"Ошибка обучения Gradient Boosting: {str(e)}")
+        return None
+
+def train_mlp(X_train, y_train, tune_params=False):
+    """
+    Обучает модель MLP с опциональным подбором гиперпараметров.
+    """
+    try:
+        logger.info("Начало обучения MLP")
+        start_time = time.time()
+        
+        if tune_params:
+            param_grid = {
+                'hidden_layer_sizes': [(50,), (100,), (100, 50), (50, 50)],
+                'max_iter': [200, 500, 1000],
+                'learning_rate_init': [0.001, 0.01, 0.1],
+                'alpha': [0.0001, 0.001, 0.01],
+                'activation': ['relu', 'tanh']
+            }
+            model = GridSearchCV(MLPClassifier(random_state=42), 
+                                param_grid, cv=5, n_jobs=-1, verbose=1)
+        else:
+            model = MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=500, 
+                                 learning_rate_init=0.001, alpha=0.0001, 
+                                 activation='relu', random_state=42)
+        
+        model.fit(X_train, y_train)
+        elapsed_time = time.time() - start_time
+        logger.info(f"Обучение MLP завершено за {elapsed_time:.2f} сек")
+        if tune_params:
+            logger.info(f"Лучшие параметры: {model.best_params_}")
+        return model
+    except Exception as e:
+        logger.error(f"Ошибка обучения MLP: {str(e)}")
+        st.error(f"Ошибка обучения MLP: {str(e)}")
+        return None
