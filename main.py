@@ -36,6 +36,12 @@ import streamlit as st
 from datetime import datetime
 import itertools
 import unittest
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+import io
 
 # Попытка импорта Boruta с обработкой ошибки
 try:
@@ -873,90 +879,147 @@ def test_feature_subsets(X, y, model, max_features=3):
         st.error(f"Ошибка тестирования подмножеств признаков: {str(e)}")
         return None
 
-# --- Модуль генерации PDF-отчёта ---
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+# ... (остальные импорты остаются без изменений)
+
 def generate_pdf_report(models, X_test, y_test):
     """
-    Генерирует PDF-отчет с результатами сравнения моделей.
+    Генерирует PDF-отчет с результатами сравнения моделей с использованием reportlab.
     """
     try:
+        # Регистрация шрифта (используем Times New Roman)
+        pdfmetrics.registerFont(TTFont('TimesNewRoman', 'TimesNewRoman.ttf'))
+        
+        # Создаем буфер для PDF
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=inch, leftMargin=inch, 
+                               topMargin=inch, bottomMargin=inch)
+        elements = []
+        
+        # Стили для текста
+        styles = getSampleStyleSheet()
+        title_style = styles['Heading1']
+        title_style.fontName = 'TimesNewRoman'
+        title_style.fontSize = 16
+        section_style = styles['Heading2']
+        section_style.fontName = 'TimesNewRoman'
+        section_style.fontSize = 14
+        body_style = ParagraphStyle(
+            name='BodyText',
+            fontName='TimesNewRoman',
+            fontSize=10,
+            leading=12,
+            spaceAfter=6,
+            encoding='UTF-8'
+        )
+        
+        # Заголовок
+        elements.append(Paragraph("Отчет по прогнозированию неисправности компьютерных компонентов", title_style))
+        elements.append(Spacer(1, 0.2 * inch))
+        elements.append(Paragraph(f"Автор: Комаров Даниил Иванович", body_style))
+        elements.append(Paragraph(f"Дата: {datetime.today().strftime('%Y-%m-%d')}", body_style))
+        elements.append(Spacer(1, 0.3 * inch))
+        
+        # Введение
+        elements.append(Paragraph("Введение", section_style))
+        elements.append(Paragraph(
+            "Данный отчет представляет результаты анализа данных и производительности моделей "
+            "машинного обучения для прогнозирования неисправности компьютерных компонентов. "
+            "Использованы алгоритмы Random Forest, Gradient Boosting, MLP, SVM, KNN и "
+            "ансамблевая модель стэкинга.", body_style
+        ))
+        elements.append(Spacer(1, 0.2 * inch))
+        
+        # Методология
+        elements.append(Paragraph("Методология", section_style))
+        methodology_text = """
+        <ul>
+            <li>Датасет: POLOMKA.csv</li>
+            <li>Предобработка: кодирование категориальных переменных, нормализация, удаление выбросов</li>
+            <li>Подбор признаков: алгоритм Boruta</li>
+            <li>Оценка: Accuracy, Precision, Recall, F1, Log Loss, ROC-AUC</li>
+        </ul>
+        """
+        elements.append(Paragraph(methodology_text, body_style))
+        elements.append(Spacer(1, 0.2 * inch))
+        
+        # Результаты
+        elements.append(Paragraph("Результаты", section_style))
+        elements.append(Paragraph("Сравнение моделей", section_style))
+        
+        # Собираем данные для таблицы
         results = []
         for name, model in models.items():
             metrics, _, _ = evaluate_model(model, X_test, y_test, name)
             if metrics:
-                results.append({
-                    'Model': name,
-                    'Accuracy': metrics['Accuracy'],
-                    'Precision': metrics['Precision'],
-                    'Recall': metrics['Recall'],
-                    'F1': metrics['F1'],
-                    'Log Loss': metrics['Log Loss'],
-                    'ROC-AUC': metrics['ROC-AUC']
-                })
+                results.append([
+                    name,
+                    f"{metrics['Accuracy']:.3f}",
+                    f"{metrics['Precision']:.3f}",
+                    f"{metrics['Recall']:.3f}",
+                    f"{metrics['F1']:.3f}",
+                    f"{metrics['Log Loss']:.3f}" if metrics['Log Loss'] else "N/A",
+                    f"{metrics['ROC-AUC']:.3f}"
+                ])
         
-        results_df = pd.DataFrame(results)
-        latex_table = results_df.to_latex(index=False, float_format="%.3f", 
-                                         caption="Сравнение производительности моделей",
-                                         label="tab:model_comparison")
+        # Создаем таблицу
+        table_data = [["Модель", "Accuracy", "Precision", "Recall", "F1", "Log Loss", "ROC-AUC"]] + results
+        table = Table(table_data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'TimesNewRoman'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')
+        ]))
+        elements.append(table)
+        elements.append(Spacer(1, 0.2 * inch))
         
-        latex_code = r"""
-\documentclass[a4paper,12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[russian]{babel}
-\usepackage{geometry}
-\geometry{margin=1in}
-\usepackage{booktabs}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{graphicx}
-\usepackage{natbib}
-\usepackage{hyperref}
-\usepackage{noto}
-
-\begin{document}
-
-\title{Отчет по прогнозированию неисправности компьютерных компонентов}
-\author{Комаров Даниил Иванович}
-\date{\today}
-\maketitle
-
-\section{Введение}
-Данный отчет представляет результаты анализа данных и производительности моделей машинного обучения для прогнозирования неисправности компьютерных компонентов. Использованы алгоритмы Random Forest, Gradient Boosting, MLP, SVM, KNN и ансамблевая модель стэкинга.
-
-\section{Методология}
-\begin{itemize}
-    \item Датасет: POLOMKA.csv
-    \item Предобработка: кодирование категориальных переменных, нормализация, удаление выбросов
-    \item Подбор признаков: алгоритм Boruta
-    \item Оценка: Accuracy, Precision, Recall, F1, Log Loss, ROC-AUC
-\end{itemize}
-
-\section{Результаты}
-\subsection{Сравнение моделей}
-""" + latex_table + r"""
-
-\subsection{Интерпретация}
-Анализ SHAP-значений показал, что наиболее значимыми признаками являются Rotational speed [rpm], Torque [Nm] и Tool wear [min]. Подбор признаков с помощью Boruta подтвердил важность этих признаков, исключив менее значимые, такие как Type.
-
-\section{Выводы}
-На основе анализа производительности моделей можно сделать вывод, что Random Forest и ансамблевая модель стэкинга показали наилучшие результаты с точки зрения точности и ROC-AUC. Дальнейшая работа может включать оптимизацию гиперпараметров, тестирование на дополнительных данных и интеграцию с реальными системами мониторинга.
-
-\section{Рекомендации}
-\begin{itemize}
-    \item Использовать Random Forest или Stacking для реальных приложений.
-    \item Проводить регулярное обновление моделей с новыми данными.
-    \item Интегрировать систему с датчиками для мониторинга в реальном времени.
-\end{itemize}
-
-\bibliographystyle{plain}
-\bibliography{references}
-
-\end{document}
-"""
-        with open('report.tex', 'w', encoding='utf-8') as f:
-            f.write(latex_code)
-        logger.info("PDF-отчет сгенерирован в report.tex")
-        st.success("PDF-отчет сгенерирован. Скомпилируйте report.tex с помощью latexmk.")
-        return latex_code
+        # Интерпретация
+        elements.append(Paragraph("Интерпретация", section_style))
+        elements.append(Paragraph(
+            "Анализ SHAP-значений показал, что наиболее значимыми признаками являются "
+            "Rotational speed [rpm], Torque [Nm] и Tool wear [min]. Подбор признаков с помощью "
+            "Boruta подтвердил важность этих признаков, исключив менее значимые, такие как Type.", 
+            body_style
+        ))
+        elements.append(Spacer(1, 0.2 * inch))
+        
+        # Выводы
+        elements.append(Paragraph("Выводы", section_style))
+        elements.append(Paragraph(
+            "На основе анализа производительности моделей можно сделать вывод, что Random Forest "
+            "и ансамблевая модель стэкинга показали наилучшие результаты с точки зрения точности "
+            "и ROC-AUC. Дальнейшая работа может включать оптимизацию гиперпараметров, тестирование "
+            "на дополнительных данных и интеграцию с реальными системами мониторинга.", 
+            body_style
+        ))
+        elements.append(Spacer(1, 0.2 * inch))
+        
+        # Рекомендации
+        elements.append(Paragraph("Рекомендации", section_style))
+        recommendations_text = """
+        <ul>
+            <li>Использовать Random Forest или Stacking для реальных приложений.</li>
+            <li>Проводить регулярное обновление моделей с новыми данными.</li>
+            <li>Интегрировать систему с датчиками для мониторинга в реальном времени.</li>
+        </ul>
+        """
+        elements.append(Paragraph(recommendations_text, body_style))
+        
+        # Создаем PDF
+        doc.build(elements)
+        buffer.seek(0)
+        logger.info("PDF-отчет успешно сгенерирован")
+        st.success("PDF-отчет сгенерирован и готов к скачиванию.")
+        return buffer
     except Exception as e:
         logger.error(f"Ошибка генерации PDF-отчета: {str(e)}")
         st.error(f"Ошибка генерации PDF-отчета: {str(e)}")
@@ -1065,10 +1128,10 @@ class TestPredictionSystem(unittest.TestCase):
         Проверяет генерацию PDF-отчета.
         """
         models = {'Random Forest': self.model}
-        latex_code = generate_pdf_report(models, self.X, self.y)
-        self.assertIsNotNone(latex_code)
-        self.assertIsInstance(latex_code, str)
-        self.assertTrue(r'\documentclass' in latex_code)
+        pdf_buffer = generate_pdf_report(models, self.X, self.y)
+        self.assertIsNotNone(pdf_buffer)
+        self.assertIsInstance(pdf_buffer, io.BytesIO)
+        self.assertGreater(pdf_buffer.getbuffer().nbytes, 0)  # Проверяем, что PDF не пустой
 
 # --- Основной модуль Streamlit ---
 def main():
@@ -1085,7 +1148,6 @@ def main():
         if st.sidebar.button("Проверить окружение"):
             st.write("Версия Python:", sys.version)
             st.write("Путь к исполняемому файлу Python:", sys.executable)
-            st.write("Активировано виртуальное окружение:", 'venv' in sys.prefix)
             try:
                 import streamlit
                 st.write("Версия Streamlit:", streamlit.__version__)
@@ -1546,12 +1608,12 @@ def main():
                 selected_features = select_features_boruta(X, y)
                 if selected_features:
                     st.write("Выбранные признаки:", selected_features)
-                    logger.info(f"Подбор признаков Boruta завершен: {selected_features}")
+                    logger.info(f"Подборpip install -r requirements.txtпризнаков Boruta завершен: {selected_features}")
                 else:
                     st.error("Ошибка подбора признаков Boruta. Проверьте данные или настройки.")
         
-        # Генерация PDF-отчета
-        elif action == "Генерация PDF-отчета":
+# Генерация PDF-отчета
+        if action == "Генерация PDF-отчета":
             st.subheader("Генерация PDF-отчета")
             models = {
                 'Random Forest': load_model('model_rf.joblib'),
@@ -1564,17 +1626,22 @@ def main():
             models = {name: model for name, model in models.items() if model is not None}
             if models:
                 st.write("Генерация отчета...")
-                latex_code = generate_pdf_report(models, X_test, y_test)
-                if latex_code:
-                    st.write("LaTeX код отчета сгенерирован. Скачайте report.tex и скомпилируйте с помощью latexmk.")
-                    st.download_button("Скачать report.tex", latex_code, file_name="report.tex")
-                    logger.info("PDF-отчет успешно сгенерирован")
+                pdf_buffer = generate_pdf_report(models, X_test, y_test)
+                if pdf_buffer:
+                    st.write("PDF-отчет сгенерирован. Нажмите кнопку ниже, чтобы скачать.")
+                    st.download_button(
+                        label="Скачать PDF-отчет",
+                        data=pdf_buffer,
+                        file_name="report.pdf",
+                        mime="application/pdf"
+                    )
+                    logger.info("PDF-отчет готов к скачиванию")
             else:
                 st.error("Не удалось загрузить модели для генерации отчета.")
-
+                
     except Exception as e:
         logger.error(f"Критическая ошибка в приложении: {str(e)}")
         st.error(f"Критическая ошибка: {str(e)}")
-        
+
 if __name__ == "__main__":
     main()
