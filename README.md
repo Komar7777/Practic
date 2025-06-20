@@ -40,15 +40,64 @@
 Для работы приложения необходимо установить зависимости, указанные в файле `requirements.txt`:
 
 ```
-pandas>=2.0.0
-numpy>=1.25.0
-scikit-learn>=1.3.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
-streamlit>=1.30.0
-joblib>=1.2.0
-boruta>=0.3; python_version >= '3.6'
-shap>=0.41.0; python_version >= '3.6'
+altair==5.5.0
+attrs==25.3.0
+blinker==1.9.0
+Boruta==0.4.3
+cachetools==5.5.2
+certifi==2025.6.15
+chardet==5.2.0
+charset-normalizer==3.4.2
+click==8.2.1
+cloudpickle==3.1.1
+colorama==0.4.6
+contourpy==1.3.2
+cycler==0.12.1
+fonttools==4.57.0
+gitdb==4.0.12
+GitPython==3.1.44
+idna==3.10
+Jinja2==3.1.6
+joblib==1.5.0
+jsonschema==4.24.0
+jsonschema-specifications==2025.4.1
+kiwisolver==1.4.8
+llvmlite==0.44.0
+MarkupSafe==3.0.2
+matplotlib==3.10.1
+narwhals==1.43.0
+numba==0.61.2
+numpy==2.2.5
+packaging==24.2
+pandas==2.2.3
+pillow==11.2.1
+protobuf==6.31.1
+pyarrow==20.0.0
+pydeck==0.9.1
+pyparsing==3.2.3
+python-dateutil==2.9.0.post0
+pytz==2025.2
+referencing==0.36.2
+reportlab==4.4.1
+requests==2.32.4
+rpds-py==0.25.1
+scikit-learn==1.6.1
+scipy==1.15.2
+seaborn==0.13.2
+shap==0.47.2
+six==1.17.0
+slicer==0.0.8
+smmap==5.0.2
+streamlit==1.45.1
+tenacity==9.1.2
+threadpoolctl==3.6.0
+toml==0.10.2
+tornado==6.5.1
+tqdm==4.67.1
+typing_extensions==4.13.2
+tzdata==2025.2
+urllib3==2.4.0
+watchdog==6.0.0
 ```
 
 ### Установка
