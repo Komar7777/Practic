@@ -882,8 +882,6 @@ def test_feature_subsets(X, y, model, max_features=3):
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# ... (остальные импорты остаются без изменений)
-
 def generate_pdf_report(models, X_test, y_test):
     """
     Генерирует PDF-отчет с результатами сравнения моделей с использованием reportlab.
